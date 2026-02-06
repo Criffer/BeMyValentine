@@ -1,0 +1,654 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Be My Valentine</title>
+    <style>
+      :root {
+        --bg1: #ffdde1;
+        --bg2: #ee9ca7;
+        --card: rgba(255, 255, 255, 0.78);
+        --text: #1f2937;
+        --muted: rgba(31, 41, 55, 0.7);
+        --yes: #16a34a;
+        --yes-hover: #15803d;
+        --no: #ef4444;
+        --no-hover: #dc2626;
+        --shadow: 0 24px 60px rgba(0, 0, 0, 0.18);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        height: 100%;
+      }
+
+      body {
+        margin: 0;
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+        color: var(--text);
+        background: radial-gradient(1000px 800px at 10% 10%, #fff 0%, rgba(255, 255, 255, 0) 60%),
+          linear-gradient(135deg, var(--bg1), var(--bg2));
+      }
+
+      .page {
+        min-height: 100%;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+      }
+
+      .card {
+        width: min(820px, 100%);
+        position: relative;
+        background: var(--card);
+        border: 1px solid rgba(255, 255, 255, 0.7);
+        border-radius: 24px;
+        box-shadow: var(--shadow);
+        padding: clamp(20px, 4vw, 44px);
+        backdrop-filter: blur(12px);
+      }
+
+      .title {
+        margin: 0;
+        font-size: clamp(28px, 4vw, 56px);
+        line-height: 1.05;
+        text-align: center;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+      }
+
+      .actions {
+        margin-top: clamp(18px, 3vw, 34px);
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        align-items: center;
+      }
+
+      .btn {
+        width: 100%;
+        border: 0;
+        border-radius: 16px;
+        padding: 14px 16px;
+        font-size: 18px;
+        font-weight: 700;
+        cursor: pointer;
+        color: #fff;
+        transition: transform 160ms ease, background-color 160ms ease, box-shadow 160ms ease;
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.12);
+        touch-action: manipulation;
+      }
+
+      .btn:active {
+        transform: translateY(1px) scale(0.99);
+      }
+
+      .btn-yes {
+        background: var(--yes);
+      }
+
+      .btn-yes:hover {
+        background: var(--yes-hover);
+      }
+
+      .btn-no {
+        background: var(--no);
+      }
+
+      .btn-no:hover {
+        background: var(--no-hover);
+      }
+
+      .no-zone {
+        position: relative;
+        width: 100%;
+        height: 56px;
+      }
+
+      #noBtn {
+        position: absolute;
+        left: 0;
+        top: 0;
+      }
+
+      .hint {
+        margin: 16px 0 0;
+        text-align: center;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .accept {
+        display: grid;
+        gap: 14px;
+        padding: 6px;
+      }
+
+      .accept__text {
+        margin: 4px 6px 0;
+        font-size: 18px;
+        line-height: 1.35;
+        font-weight: 700;
+        text-align: center;
+      }
+
+      .hearts {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        overflow: hidden;
+        z-index: 40;
+      }
+
+      .heart {
+        position: absolute;
+        bottom: -40px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 22px;
+        opacity: 0;
+        animation: floatUp var(--dur, 1800ms) ease-in forwards;
+        filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.18));
+      }
+
+      @keyframes floatUp {
+        0% {
+          transform: translate(var(--x, 0px), 0px) scale(var(--s, 1));
+          opacity: 0;
+        }
+        12% {
+          opacity: 1;
+        }
+        100% {
+          transform: translate(calc(var(--x, 0px) * 1.2), calc(-1 * var(--y, 540px)))
+            scale(calc(var(--s, 1) * 1.1));
+          opacity: 0;
+        }
+      }
+
+      .modal[hidden] {
+        display: none;
+      }
+
+      .modal {
+        position: fixed;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        padding: 20px;
+        z-index: 50;
+      }
+
+      .modal__backdrop {
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.45);
+      }
+
+      .modal__panel {
+        position: relative;
+        width: min(520px, 100%);
+        background: rgba(255, 255, 255, 0.92);
+        border: 1px solid rgba(255, 255, 255, 0.7);
+        border-radius: 18px;
+        box-shadow: var(--shadow);
+        padding: 18px;
+        backdrop-filter: blur(10px);
+      }
+
+      .final[hidden] {
+        display: none;
+      }
+
+      .final {
+        position: fixed;
+        inset: 0;
+        z-index: 60;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+      }
+
+      .final__card {
+        width: min(720px, 100%);
+        background: rgba(255, 255, 255, 0.9);
+        border: 1px solid rgba(255, 255, 255, 0.7);
+        border-radius: 24px;
+        box-shadow: var(--shadow);
+        padding: clamp(18px, 4vw, 32px);
+        display: grid;
+        gap: 12px;
+        text-align: center;
+        backdrop-filter: blur(10px);
+      }
+
+      .final__title {
+        margin: 0;
+        font-size: clamp(22px, 3.2vw, 40px);
+        font-weight: 800;
+        letter-spacing: -0.02em;
+      }
+
+      .final__text {
+        margin: 0;
+        color: var(--muted);
+        font-weight: 700;
+      }
+
+      .final__anim {
+        width: min(420px, 100%);
+        height: 160px;
+        border-radius: 16px;
+        justify-self: center;
+        display: grid;
+        place-items: center;
+        background: linear-gradient(180deg, rgba(255, 221, 225, 0.5), rgba(238, 156, 167, 0.22));
+        border: 1px solid rgba(31, 41, 55, 0.08);
+        box-shadow: 0 14px 30px rgba(0, 0, 0, 0.14);
+        overflow: hidden;
+      }
+
+      .final__heart {
+        position: absolute;
+        font-size: 30px;
+        animation: finalPop 900ms ease-in-out infinite;
+        filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.16));
+      }
+
+      .final__heart:nth-child(1) {
+        --tx: -120px;
+        --ty: 22px;
+        animation-delay: 0ms;
+      }
+
+      .final__heart:nth-child(2) {
+        --tx: -60px;
+        --ty: -14px;
+        animation-delay: 120ms;
+      }
+
+      .final__heart:nth-child(3) {
+        --tx: 0px;
+        --ty: 18px;
+        animation-delay: 240ms;
+      }
+
+      .final__heart:nth-child(4) {
+        --tx: 60px;
+        --ty: -18px;
+        animation-delay: 360ms;
+      }
+
+      .final__heart:nth-child(5) {
+        --tx: 120px;
+        --ty: 10px;
+        animation-delay: 480ms;
+      }
+
+      @keyframes finalPop {
+        0% {
+          opacity: 0.75;
+          transform: translate(var(--tx, 0px), var(--ty, 0px)) scale(0.92);
+        }
+        45% {
+          opacity: 1;
+          transform: translate(var(--tx, 0px), calc(var(--ty, 0px) - 12px)) scale(1.12);
+        }
+        100% {
+          opacity: 0.75;
+          transform: translate(var(--tx, 0px), var(--ty, 0px)) scale(0.92);
+        }
+      }
+
+      .modal__header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 6px 6px 12px;
+      }
+
+      .modal__title {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 800;
+      }
+
+      .icon-btn {
+        border: 0;
+        background: transparent;
+        font-size: 18px;
+        cursor: pointer;
+        padding: 8px 10px;
+        border-radius: 12px;
+      }
+
+      .icon-btn:hover {
+        background: rgba(0, 0, 0, 0.06);
+      }
+
+      .btn-full {
+        width: 100%;
+      }
+
+      @media (max-width: 520px) {
+        .actions {
+          grid-template-columns: 1fr;
+        }
+
+        .no-zone {
+          height: 52px;
+        }
+      }
+    </style>
+
+    <script>
+      function start() {
+        const title = document.querySelector('.title');
+        const card = document.querySelector('.card');
+        const yesBtn = document.getElementById('yesBtn');
+        const noBtn = document.getElementById('noBtn');
+        const noZone = document.getElementById('noZone');
+        const hintText = document.getElementById('hintText');
+        const hearts = document.getElementById('hearts');
+
+        const modal = document.getElementById('modal');
+        const modalBackdrop = document.getElementById('modalBackdrop');
+        const modalClose = document.getElementById('modalClose');
+        const acceptText = document.getElementById('acceptText');
+        const acceptOk = document.getElementById('acceptOk');
+
+        const finalScreen = document.getElementById('finalScreen');
+        const restartBtn = document.getElementById('restartBtn');
+
+        function clamp(n, min, max) {
+          return Math.max(min, Math.min(max, n));
+        }
+
+        function setNoBtnPosition(x, y) {
+          noBtn.style.left = `${x}px`;
+          noBtn.style.top = `${y}px`;
+        }
+
+        function getCardBounds(btnRect) {
+          const cardRect = card.getBoundingClientRect();
+          const padding = 16;
+
+          const maxX = Math.max(0, cardRect.width - btnRect.width - padding);
+          const maxY = Math.max(0, cardRect.height - btnRect.height - padding);
+
+          return { padding, maxX, maxY };
+        }
+
+        function randomizeNoPosition() {
+          const btnRect = noBtn.getBoundingClientRect();
+
+          const { padding, maxX, maxY } = getCardBounds(btnRect);
+
+          const x = padding + Math.floor(Math.random() * (maxX + 1));
+          const y = padding + Math.floor(Math.random() * (maxY + 1));
+
+          setNoBtnPosition(x, y);
+        }
+
+        function dodgeFromPointer(clientX, clientY) {
+          const btnRect = noBtn.getBoundingClientRect();
+
+          const btnCenterX = btnRect.left + btnRect.width / 2;
+          const btnCenterY = btnRect.top + btnRect.height / 2;
+
+          const dx = btnCenterX - clientX;
+          const dy = btnCenterY - clientY;
+
+          const dist = Math.hypot(dx, dy);
+          const dangerRadius = 170;
+
+          if (dist > dangerRadius) return;
+
+          const push = 210;
+          const dirX = dx / (dist || 1);
+          const dirY = dy / (dist || 1);
+
+          const cardRect = card.getBoundingClientRect();
+
+          const currentLeft = parseFloat(noBtn.style.left || '0');
+          const currentTop = parseFloat(noBtn.style.top || '0');
+
+          const { padding, maxX, maxY } = getCardBounds(btnRect);
+
+          const nextLeft = clamp(currentLeft + dirX * push + (Math.random() * 80 - 40), padding, maxX);
+          const nextTop = clamp(currentTop + dirY * push + (Math.random() * 60 - 30), padding, maxY);
+
+          const btnInCardLeft = cardRect.left + nextLeft;
+          const btnInCardTop = cardRect.top + nextTop;
+
+          const nextCenterX = btnInCardLeft + btnRect.width / 2;
+          const nextCenterY = btnInCardTop + btnRect.height / 2;
+
+          const ndx = nextCenterX - clientX;
+          const ndy = nextCenterY - clientY;
+
+          if (Math.hypot(ndx, ndy) < 70) {
+            randomizeNoPosition();
+            return;
+          }
+
+          setNoBtnPosition(nextLeft, nextTop);
+        }
+
+        function openModal() {
+          modal.hidden = false;
+          setTimeout(() => acceptOk.focus(), 0);
+        }
+
+        function closeModal() {
+          modal.hidden = true;
+        }
+
+        function showFinalScreen() {
+          finalScreen.hidden = false;
+          setTimeout(() => restartBtn.focus(), 0);
+        }
+
+        function hideFinalScreen() {
+          finalScreen.hidden = true;
+        }
+
+        function burstHearts() {
+          const rect = document.documentElement.getBoundingClientRect();
+          const count = 22;
+          const emojis = ['❤️', '💖', '💕', '💗', '💘'];
+
+          for (let i = 0; i < count; i++) {
+            const el = document.createElement('span');
+            el.className = 'heart';
+            el.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+
+            const x = (Math.random() - 0.5) * rect.width * 0.8;
+            const y = 380 + Math.random() * 420;
+            const s = 0.85 + Math.random() * 1.25;
+            const dur = 1400 + Math.random() * 1200;
+
+            el.style.left = `${Math.floor(Math.random() * rect.width)}px`;
+            el.style.setProperty('--x', `${Math.round(x)}px`);
+            el.style.setProperty('--y', `${Math.round(y)}px`);
+            el.style.setProperty('--s', `${s.toFixed(2)}`);
+            el.style.setProperty('--dur', `${Math.round(dur)}ms`);
+
+            hearts.appendChild(el);
+
+            window.setTimeout(() => {
+              el.remove();
+            }, dur + 200);
+          }
+        }
+
+        yesBtn.addEventListener('click', () => {
+          hintText.textContent = 'Best choice.';
+          if (title) title.textContent = 'Now you’re stuck with me 😌';
+          acceptText.textContent = 'Yes, I am your Valentine now.';
+          burstHearts();
+          openModal();
+        });
+
+        noBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          hintText.textContent = 'Nice try 😌';
+          randomizeNoPosition();
+        });
+
+        noBtn.addEventListener('mouseenter', () => {
+          randomizeNoPosition();
+        });
+
+        noBtn.addEventListener('pointerdown', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          randomizeNoPosition();
+        });
+
+        noBtn.addEventListener(
+          'touchstart',
+          (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            randomizeNoPosition();
+          },
+          { passive: false }
+        );
+
+        noZone.addEventListener('mousemove', (e) => {
+          dodgeFromPointer(e.clientX, e.clientY);
+        });
+
+        noZone.addEventListener('pointermove', (e) => {
+          if (typeof e.clientX !== 'number' || typeof e.clientY !== 'number') return;
+          dodgeFromPointer(e.clientX, e.clientY);
+        });
+
+        noZone.addEventListener(
+          'touchstart',
+          (e) => {
+            const t = e.touches && e.touches[0];
+            if (!t) return;
+            dodgeFromPointer(t.clientX, t.clientY);
+          },
+          { passive: true }
+        );
+
+        card.addEventListener(
+          'touchmove',
+          (e) => {
+            const t = e.touches && e.touches[0];
+            if (!t) return;
+            dodgeFromPointer(t.clientX, t.clientY);
+          },
+          { passive: true }
+        );
+
+        card.addEventListener(
+          'touchstart',
+          (e) => {
+            const t = e.touches && e.touches[0];
+            if (!t) return;
+            dodgeFromPointer(t.clientX, t.clientY);
+          },
+          { passive: true }
+        );
+
+        modalBackdrop.addEventListener('click', closeModal);
+        modalClose.addEventListener('click', closeModal);
+        acceptOk.addEventListener('click', () => {
+          closeModal();
+          burstHearts();
+          showFinalScreen();
+        });
+
+        restartBtn.addEventListener('click', () => {
+          hideFinalScreen();
+          hintText.textContent = 'Choose wisely…';
+          if (title) title.textContent = 'Will you be my Valentine <3 ?';
+          randomizeNoPosition();
+        });
+
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape' && !modal.hidden) closeModal();
+        });
+
+        function init() {
+          setNoBtnPosition(0, 0);
+          hideFinalScreen();
+
+          const ro = new ResizeObserver(() => {
+            setNoBtnPosition(0, 0);
+          });
+
+          ro.observe(noZone);
+        }
+
+        init();
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', start);
+      } else {
+        start();
+      }
+    </script>
+  </head>
+  <body>
+    <main class="page">
+      <section class="card" aria-label="Valentine card">
+        <h1 class="title">Will you be my Valentine &lt;3 ?</h1>
+
+        <div class="actions" aria-label="Actions">
+          <button id="yesBtn" class="btn btn-yes" type="button">Yes 💘</button>
+          <div class="no-zone" id="noZone" aria-label="No button area">
+            <button id="noBtn" class="btn btn-no" type="button">No 🙃</button>
+          </div>
+        </div>
+
+        <p class="hint" id="hintText">Choose wisely…</p>
+      </section>
+
+      <div class="hearts" id="hearts" aria-hidden="true"></div>
+
+      <div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle" hidden>
+        <div class="modal__backdrop" id="modalBackdrop"></div>
+        <div class="modal__panel">
+          <div class="modal__header">
+            <h2 id="modalTitle" class="modal__title">It’s official</h2>
+            <button id="modalClose" class="icon-btn" type="button" aria-label="Close">
+              ✕
+            </button>
+          </div>
+
+          <div class="accept">
+            <p class="accept__text" id="acceptText">Yes, I am your Valentine now.</p>
+            <button id="acceptOk" class="btn btn-yes btn-full" type="button">Aww OK</button>
+          </div>
+        </div>
+      </div>
+
+      <section class="final" id="finalScreen" hidden aria-label="Final message">
+        <div class="final__card">
+          <h2 class="final__title">Now you’re stuck with me 😌</h2>
+          <p class="final__text">Happy Valentine’s Day.</p>
+          <div class="final__anim" aria-hidden="true">
+            <span class="final__heart">❤️</span>
+            <span class="final__heart">💖</span>
+            <span class="final__heart">💕</span>
+            <span class="final__heart">💗</span>
+            <span class="final__heart">💘</span>
+          </div>
+          <button id="restartBtn" class="btn btn-no btn-full" type="button">Restart</button>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
